@@ -1,0 +1,22 @@
+[tasks]
+prove prf
+cover cvr
+
+[options]
+prf: mode prove
+prf: depth 3
+cvr: mode cover
+cvr: depth 40
+
+[engines]
+smtbmc
+
+[script]
+read -formal subordinate.sv
+read -formal faxil_slave.v
+hierarchy -top subordinate
+prep -top subordinate
+
+[files]
+subordinate.sv
+vendor/faxil_slave.v

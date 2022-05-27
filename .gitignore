@@ -1,1 +1,4 @@
 *.vvp
+*.vcd
+*_cover
+*_prove

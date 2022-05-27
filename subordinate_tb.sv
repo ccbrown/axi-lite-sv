@@ -1,6 +1,6 @@
 module subordinate_tb;
 
-reg  axi_aclk;
+reg  axi_aclk = 0;
 reg  axi_aresetn;
 reg  [3:0] axi_awaddr;
 reg  [2:0] axi_awprot;
@@ -46,7 +46,15 @@ subordinate s(
     .axi_rvalid_out(axi_rvalid)
 );
 
+localparam PERIOD = 10;
+
+always
+    #(PERIOD/2) axi_aclk = !axi_aclk;
+
 initial begin
+    $dumpfile("subordinate_tb.vcd");
+    $dumpvars(0, subordinate_tb);
+
     // RESET
     axi_aresetn <= 0;
     axi_awvalid <= 0;
@@ -57,9 +65,121 @@ initial begin
     axi_arprot <= 3'b000;
     axi_rready <= 0;
 
-    #1
-    assert (axi_awready == 0 && axi_wready == 0);
+    #PERIOD
+    assert (!axi_awready && !axi_wready) else $fatal;
     axi_aresetn <= 1;
+
+    // WRITES
+
+    axi_wstrb <= 4'b1111;
+    axi_awvalid <= 1;
+    axi_wvalid <= 1;
+    axi_bready <= 1;
+
+    // Write to r0
+    axi_awaddr <= 4'b0000;
+    axi_wdata <= 32'b01010101010101010101010101010101;
+    #PERIOD
+    assert (axi_awready && axi_wready) else $fatal;
+
+    // Check response
+    #PERIOD
+    assert (!axi_awready && !axi_wready) else $fatal;
+    assert (axi_bvalid && axi_bresp == 2'b00) else $fatal;
+
+    // Write to r1
+    axi_awaddr <= 4'b0100;
+    axi_wdata <= 32'b01111101010101110101010101011101;
+    #PERIOD
+    assert (axi_awready && axi_wready) else $fatal;
+
+    // Check response
+    #PERIOD
+    assert (!axi_awready && !axi_wready) else $fatal;
+    assert (axi_bvalid && axi_bresp == 2'b00) else $fatal;
+    axi_awaddr <= 4'b1000;
+
+    // Write to r2
+    axi_awaddr <= 4'b1000;
+    axi_wdata <= 32'b11111100000000000000000000000000;
+    #PERIOD
+    assert (axi_awready && axi_wready) else $fatal;
+
+    // Check response
+    #PERIOD
+    assert (!axi_awready && !axi_wready) else $fatal;
+    assert (axi_bvalid && axi_bresp == 2'b00) else $fatal;
+    axi_awaddr <= 4'b1000;
+
+    // Write to r3
+    axi_awaddr <= 4'b1100;
+    axi_wdata <= 32'b00000000000000000000000000000001;
+    #PERIOD
+    assert (axi_awready && axi_wready) else $fatal;
+
+    // Check response
+    #PERIOD
+    assert (!axi_awready && !axi_wready) else $fatal;
+    assert (axi_bvalid && axi_bresp == 2'b00) else $fatal;
+    axi_awaddr <= 4'b1000;
+
+    // Apply some backpressure && make sure the response is available until we're ready for it
+    axi_bready <= 0;
+    #(PERIOD*2)
+    assert (axi_bvalid && axi_bresp == 2'b00) else $fatal;
+    axi_bready <= 1;
+
+    // We're done writing
+    axi_awvalid <= 0;
+    axi_wvalid <= 0;
+
+    // READS
+
+    axi_arvalid <= 1;
+    axi_rready <= 1;
+
+    // Read r0
+    axi_araddr <= 4'b0000;
+    #PERIOD
+
+    assert (!axi_arready && axi_rvalid) else $fatal;
+    assert (axi_rdata == 32'b01010101010101010101010101010101) else $fatal;
+
+    #PERIOD
+    assert (!axi_rvalid) else $fatal;
+
+    // Read r1
+    axi_araddr <= 4'b0100;
+    #PERIOD
+
+    assert (!axi_arready && axi_rvalid) else $fatal;
+    assert (axi_rdata == 32'b01111101010101110101010101011101) else $fatal;
+
+    #PERIOD
+    assert (!axi_rvalid) else $fatal;
+
+    // Read r2
+    axi_araddr <= 4'b1000;
+    #PERIOD
+
+    assert (!axi_arready && axi_rvalid) else $fatal;
+    assert (axi_rdata == 32'b11111100000000000000000000000000) else $fatal;
+
+    #PERIOD
+    assert (!axi_rvalid) else $fatal;
+
+    // Read r3
+    axi_araddr <= 4'b1100;
+    #PERIOD
+
+    assert (!axi_arready && axi_rvalid) else $fatal;
+    assert (axi_rdata == 32'b00000000000000000000000000000001) else $fatal;
+
+    #PERIOD
+    assert (!axi_rvalid) else $fatal;
+
+    // Finish
+    $finish();
 end
 
 endmodule
