@@ -1,10 +1,10 @@
-# axi-lite-vs
+# axi-lite-sv
 
 This is an AXI4-Lite implementation in SystemVerilog.
 
 It is formally verified using the formal properties from [ZipCPU/wb2axip](https://github.com/ZipCPU/wb2axip).
 
-I prioritized simplicity over performance, so the implementation should be very easy to understand and modify in order to implement custom AXI-Lite peripherals, but it does not support multiple in-flight transactions. This means it only has 50% of the theoretical throughput of AXI-Lite. This is pretty typical, especially if you're using Xilinx IP, but if you need the full throughput, look elsewhere.
+I prioritized simplicity over performance, so the implementation should be very easy to understand and modify in order to implement custom AXI-Lite peripherals, but it does not support multiple in-flight transactions. This means it only has 50% of the theoretical throughput of AXI-Lite. This is pretty typical, especially if you're using Xilinx IP, but if you need the full throughput, look elsewhere (such as [ZipCPU/wb2axip](https://github.com/ZipCPU/wb2axip)).
 
 ## Developing
 
